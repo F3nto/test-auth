@@ -15,6 +15,7 @@ import ToastNotification, {
 import LoadingDots from "../../utils/Loading/LoadingDots";
 import { setToken } from "../../redux/features/authSlice";
 import { useDispatch } from "react-redux";
+import { jwtDecode } from "jwt-decode";
 
 const { Title } = Typography;
 
@@ -27,11 +28,16 @@ const Login = () => {
     mutationFn: async (formData) => {
       const response = await postLoginApi(formData);
       return response.data;
-   
     },
     onSuccess: (data) => {
       if (data?.token) {
-        dispatch(setToken(data.token));
+        const decoded = jwtDecode(data.token);
+        const user = {
+          id: decoded.id,
+          name: decoded.name,
+          email: decoded.email,
+        };
+        dispatch(setToken({ token: data.token, user }));
         showSuccessToast("Login Successful!");
         setTimeout(() => navigate("/dashboard"), 1500);
       } else {
@@ -58,20 +64,6 @@ const Login = () => {
       verifyMutation.mutate(formData);
     }, 1500);
   };
-
-  useEffect(() => {
-    const handlePopstate = () => {
-      navigate("/register");
-    };
-
-    window.addEventListener("popstate", handlePopstate);
-
-    // Clean up listener on unmount
-    return () => {
-      window.removeEventListener("popstate", handlePopstate);
-    };
-  }, [navigate]);
-
 
   return (
     <>
